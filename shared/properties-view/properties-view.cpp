@@ -20,6 +20,7 @@
 #include <QMenu>
 #include <QMessageBox>
 #include <QStackedWidget>
+#include <QTabWidget>
 #include <QDir>
 #include <QGroupBox>
 #include <QObject>
@@ -117,6 +118,14 @@ void OBSPropertiesView::RefreshProperties()
 	int h, v, hend, vend;
 	GetScrollPos(h, v, hend, vend);
 
+	selectedTabs.clear();
+	if (widget) {
+		for (QTabWidget *tabs : widget->findChildren<QTabWidget *>()) {
+			if (tabs->currentWidget()) {
+				selectedTabs.insert(tabs->currentWidget()->objectName());
+			}
+		}
+	}
 	children.clear();
 	if (widget) {
 		widget->deleteLater();
@@ -136,10 +145,7 @@ void OBSPropertiesView::RefreshProperties()
 	obs_property_t *property = obs_properties_first(properties);
 	bool hasNoProperties = !property;
 
-	while (property) {
-		AddProperty(property, layout);
-		obs_property_next(&property);
-	}
+	AddProperties(properties, layout);
 
 	setWidgetResizable(true);
 	setWidget(widget);
@@ -1487,6 +1493,46 @@ void OBSPropertiesView::AddFrameRate(obs_property_t *prop, bool &warning, QFormL
 	});
 }
 
+void OBSPropertiesView::AddProperties(obs_properties_t *props, QFormLayout *layout)
+{
+	QTabWidget *tabs = nullptr;
+	for (obs_property_t *prop = obs_properties_first(props); prop; obs_property_next(&prop)) {
+		if (obs_property_get_type(prop) != OBS_PROPERTY_GROUP ||
+		    obs_property_group_type(prop) != OBS_GROUP_TAB) {
+			tabs = nullptr;
+			AddProperty(prop, layout);
+			continue;
+		}
+
+		if (!obs_property_visible(prop)) {
+			continue;
+		}
+
+		if (!tabs) {
+			tabs = new QTabWidget(layout->parentWidget());
+			tabs->setUsesScrollButtons(true);
+			layout->addRow(tabs);
+		}
+
+		QWidget *page = new QWidget(tabs);
+		page->setObjectName(QT_UTF8(obs_property_name(prop)));
+		QFormLayout *pageLayout = new QFormLayout(page);
+		pageLayout->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
+		pageLayout->setLabelAlignment(layout->labelAlignment());
+		AddProperties(obs_property_group_content(prop), pageLayout);
+
+		int index = tabs->addTab(page, QT_UTF8(obs_property_description(prop)));
+		tabs->setTabEnabled(index, obs_property_enabled(prop));
+		const char *description = obs_property_long_description(prop);
+		if (description) {
+			tabs->setTabToolTip(index, QT_UTF8(description));
+		}
+		if (obs_property_enabled(prop) && selectedTabs.contains(page->objectName())) {
+			tabs->setCurrentIndex(index);
+		}
+	}
+}
+
 void OBSPropertiesView::AddGroup(obs_property_t *prop, QFormLayout *layout)
 {
 	const char *name = obs_property_name(prop);
@@ -1506,12 +1552,7 @@ void OBSPropertiesView::AddGroup(obs_property_t *prop, QFormLayout *layout)
 	subLayout->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
 	groupBox->setLayout(subLayout);
 
-	obs_properties_t *content = obs_property_group_content(prop);
-	obs_property_t *el = obs_properties_first(content);
-	while (el != nullptr) {
-		AddProperty(el, subLayout);
-		obs_property_next(&el);
-	}
+	AddProperties(obs_property_group_content(prop), subLayout);
 
 	// Insert into UI
 	layout->setWidget(layout->rowCount(), QFormLayout::ItemRole::SpanningRole, groupBox);

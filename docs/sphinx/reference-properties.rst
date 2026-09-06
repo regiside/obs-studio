@@ -358,10 +358,36 @@ Property Object Functions
 
                           - **OBS_GROUP_NORMAL** - A normal group with just a name and content.
                           - **OBS_GROUP_CHECKABLE** - A checkable group with a checkbox, name and content.
+                          - **OBS_GROUP_TAB** - A tab page. Consecutive sibling tab groups share a tab bar.
 
    :param    group:       Group to add
 
    :return:               The property
+
+   Tab groups use the same themed Qt tab widget as the advanced Output
+   settings. Their descriptions become tab labels. A non-tab property ends
+   a run of tabs, even when that property is hidden. Hidden tab groups are
+   omitted and disabled tab groups cannot be selected. Tabs can also appear
+   inside normal or checkable groups, or inside other tabs.
+
+   Tab selection is local to the properties view and is preserved by property
+   name when the view refreshes, provided the selected tab remains visible
+   and enabled. Switching tabs does not modify settings. Child properties
+   use the existing settings namespace and callbacks; names must remain
+   unique across the property tree. Tab groups do not store a boolean value.
+
+   For example::
+
+      obs_properties_t *video = obs_properties_create();
+      obs_properties_add_text(video, "title", "Title", OBS_TEXT_DEFAULT);
+      obs_properties_add_group(props, "video_tab", "Video", OBS_GROUP_TAB, video);
+
+      obs_properties_t *audio = obs_properties_create();
+      obs_properties_add_int_slider(audio, "volume", "Volume", 0, 100, 1);
+      obs_properties_add_group(props, "audio_tab", "Audio", OBS_GROUP_TAB, audio);
+
+   Plugins using ``OBS_GROUP_TAB`` require a version of OBS that supports
+   this group type. Existing group types and their numeric values are unchanged.
 
    Important Related Functions:
 
@@ -613,6 +639,7 @@ Property Enumeration Functions
             - OBS_COMBO_INVALID
             - OBS_GROUP_NORMAL
             - OBS_GROUP_CHECKABLE
+            - OBS_GROUP_TAB
 
 ---------------------
 

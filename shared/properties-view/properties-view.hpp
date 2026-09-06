@@ -5,6 +5,7 @@
 #include <obs.hpp>
 #include <qtimer.h>
 #include <QPointer>
+#include <QSet>
 #include <vector>
 #include <memory>
 
@@ -98,6 +99,7 @@ private:
 	PropertiesVisualUpdateCb visUpdateCb = nullptr;
 	int minSize;
 	std::vector<std::unique_ptr<WidgetInfo>> children;
+	QSet<QString> selectedTabs;
 	std::string lastFocused;
 	QWidget *lastWidget = nullptr;
 	bool deferUpdate;
@@ -121,6 +123,7 @@ private:
 	void AddFont(obs_property_t *prop, QFormLayout *layout, QLabel *&label);
 	void AddFrameRate(obs_property_t *prop, bool &warning, QFormLayout *layout, QLabel *&label);
 
+	void AddProperties(obs_properties_t *props, QFormLayout *layout);
 	void AddGroup(obs_property_t *prop, QFormLayout *layout);
 
 	void AddProperty(obs_property_t *property, QFormLayout *layout);

@@ -19,6 +19,7 @@ target_sources(
     sync-pair-vid.c
     test-filter.c
     test-input.c
+    test-property-tabs.c
     test-random.c
     test-sinewave.c
 )

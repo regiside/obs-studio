@@ -1167,6 +1167,10 @@ QTabBar::tab:selected {
     color: var(--text);
 }
 
+QTabBar::tab:disabled {
+    color: var(--text_disabled);
+}
+
 QTabBar::tab:top {
     border-bottom: 0px solid transparent;
     margin-bottom: 0px;
