@@ -386,8 +386,19 @@ Property Object Functions
       obs_properties_add_int_slider(audio, "volume", "Volume", 0, 100, 1);
       obs_properties_add_group(props, "audio_tab", "Audio", OBS_GROUP_TAB, audio);
 
-   Plugins using ``OBS_GROUP_TAB`` require a version of OBS that supports
-   this group type. Existing group types and their numeric values are unchanged.
+   .. note::
+
+      Tab groups gracefully fall back to ordinary labeled groups on older
+      versions of OBS whose properties view does not support tabs. The child
+      settings remain accessible as stacked sections through the existing
+      group API. This fallback was verified with OBS 32.1.2. Existing group
+      types and their numeric values are unchanged.
+
+      The plugin must still be compatible with the older OBS version. Build
+      against the oldest supported OBS SDK, adding the ``OBS_GROUP_TAB`` enum
+      value to its headers if needed. OBS rejects plugins that report a newer
+      libobs major/minor API version before displaying their properties, so
+      building against a newer SDK can prevent this fallback from being used.
 
    Important Related Functions:
 
